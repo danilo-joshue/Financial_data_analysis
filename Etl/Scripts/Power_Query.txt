@@ -1,0 +1,23 @@
+let
+    Fonte = Excel.Workbook(File.Contents("E:\www\Dio\Financial_sales_analysis\Data\Sample_Raw.xlsx"), null, true),
+    financials_Table = Fonte{[Item="financials",Kind="Table"]}[Data],
+    #"Tipo Alterado" = Table.TransformColumnTypes(financials_Table,{{"Segment", type text}, {"Country", type text}, {"Product", type text}, {"Discount Band", type text}, {"Units Sold", type number}, {"Manufacturing Price", Int64.Type}, {"Sale Price", Int64.Type}, {"Gross Sales", type number}, {"Discounts", type number}, {" Sales", type number}, {"COGS", type number}, {"Profit", type number}, {"Date", type date}, {"Month Number", Int64.Type}, {"Month Name", type text}, {"Year", Int64.Type}}),
+    #"Tipo Alterado1" = Table.TransformColumnTypes(#"Tipo Alterado",{{"Sale Price", type number}, {"Manufacturing Price", type number}, {"Units Sold", Int64.Type}}),
+    #"Linhas em Branco Removidas" = Table.SelectRows(#"Tipo Alterado1", each not List.IsEmpty(List.RemoveMatchingItems(Record.FieldValues(_), {"", null}))),
+    #"Personalização Adicionada" = Table.AddColumn(#"Linhas em Branco Removidas", "Profit Margin", each [Profit] / [#" Sales"]),
+    #"Tipo Alterado2" = Table.TransformColumnTypes(#"Personalização Adicionada",{{"Profit Margin", Percentage.Type}}),
+    #"Colunas Reordenadas" = Table.ReorderColumns(#"Tipo Alterado2",{"Segment", "Country", "Product", "Discount Band", "Units Sold", "Manufacturing Price", "Sale Price", "Gross Sales", "Discounts", " Sales", "COGS", "Profit", "Profit Margin", "Date", "Month Number", "Month Name", "Year"}),
+    #"Tipo Alterado3" = Table.TransformColumnTypes(#"Colunas Reordenadas",{{"Profit Margin", type number}}),
+    #"Tipo Alterado4" = Table.TransformColumnTypes(#"Tipo Alterado3",{{"Profit Margin", Percentage.Type}}),
+    #"Colocar Cada Palavra Em Maiúscula" = Table.TransformColumns(#"Tipo Alterado4",{{"Segment", Text.Proper, type text}, {"Country", Text.Proper, type text}, {"Product", Text.Proper, type text}, {"Discount Band", Text.Proper, type text}, {"Month Name", Text.Proper, type text}}),
+    #"Tipo Alterado5" = Table.TransformColumnTypes(#"Colocar Cada Palavra Em Maiúscula",{{"Date", type date}, {"Gross Sales", type number}, {"Sale Price", type number}, {"Manufacturing Price", type number}}, "pt-BR"),
+    #"Tipo Alterado6" = Table.TransformColumnTypes(#"Tipo Alterado5",{{"Manufacturing Price", type number}}),
+    Arredondado = Table.TransformColumns(#"Tipo Alterado6",{{"Manufacturing Price", each Number.Round(_, 2), type number}}),
+    Arredondado1 = Table.TransformColumns(Arredondado,{{"Sale Price", each Number.Round(_, 2), type number}}),
+    Arredondado2 = Table.TransformColumns(Arredondado1,{{"Gross Sales", each Number.Round(_, 2), type number}}),
+    Arredondado3 = Table.TransformColumns(Arredondado2,{{"Discounts", each Number.Round(_, 2), type number}}),
+    Arredondado4 = Table.TransformColumns(Arredondado3,{{" Sales", each Number.Round(_, 2), type number}}),
+    Arredondado5 = Table.TransformColumns(Arredondado4,{{"COGS", each Number.Round(_, 2), type number}}),
+    Arredondado6 = Table.TransformColumns(Arredondado5,{{"Profit", each Number.Round(_, 2), type number}})
+in
+    Arredondado6

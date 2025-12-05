@@ -1,1 +1,0 @@
- scripts SQL usados no projeto (ETL, queries, etc.)
